@@ -1,0 +1,10 @@
+{
+  "name": "Коржик-Трекер",
+  "short_name": "Трекер",
+  "description": "Nutrition tracker for Rin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait"
+}
