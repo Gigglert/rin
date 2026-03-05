@@ -31,13 +31,44 @@ const SUPPS = [
 ];
 
 const STORAGE_KEY = "rin-nutrition-v4";
-function loadData(): Record<string, any> {
+var SB_URL = "https://ogsnqqdamfcpfovvebdw.supabase.co";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nc25xcWRhbWZjcGZvdnZlYmR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MDkyNDEsImV4cCI6MjA4ODI4NTI0MX0.UwUpM0bL4QUYe7kCDP6xyIcSYhzm32_zG12BDdkw0LM";
+var SB_HEADERS = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
+
+function loadLocal(): Record<string, any> {
   if (typeof window === "undefined") return {};
-  try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : {}; } catch { return {}; }
+  try { var raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : {}; } catch { return {}; }
 }
-function persistData(d: Record<string, any>) {
+function saveLocal(d: Record<string, any>) {
   if (typeof window === "undefined") return;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (e) { console.error(e); }
+}
+async function loadCloud(): Promise<Record<string, any> | null> {
+  try {
+    var r = await fetch(SB_URL + "/rest/v1/nutrition_data?id=eq.rin&select=data", { headers: SB_HEADERS });
+    if (!r.ok) return null;
+    var rows = await r.json();
+    if (rows && rows.length > 0 && rows[0].data) return rows[0].data;
+    return null;
+  } catch (e) { console.error("Cloud load error:", e); return null; }
+}
+async function saveCloud(d: Record<string, any>) {
+  try {
+    await fetch(SB_URL + "/rest/v1/nutrition_data?id=eq.rin", {
+      method: "PATCH",
+      headers: Object.assign({}, SB_HEADERS, { "Prefer": "return=minimal" }),
+      body: JSON.stringify({ data: d, updated_at: new Date().toISOString() })
+    });
+  } catch (e) { console.error("Cloud save error:", e); }
+}
+async function loadData(): Promise<Record<string, any>> {
+  var cloud = await loadCloud();
+  if (cloud && Object.keys(cloud).length > 0) { saveLocal(cloud); return cloud; }
+  return loadLocal();
+}
+function persistData(d: Record<string, any>) {
+  saveLocal(d);
+  saveCloud(d);
 }
 
 async function aiParse(text: string) {
@@ -194,7 +225,7 @@ export default function Home() {
   Object.keys(DAILY).forEach(function(k) { spentBefore[k] = wt.mac[k] - dt[k]; });
   const dynTargets = dynamicTarget(spentBefore, todayIdx >= 0 ? todayIdx : daysIn - 1);
 
-  useEffect(function() { setAll(loadData()); setLd(false); }, []);
+  useEffect(function() { loadData().then(function(d) { setAll(d); setLd(false); }); }, []);
   const sv = useCallback(function(nd: Record<string, any>) { setAll(nd); persistData(nd); }, []);
   const addM = function(nm: any[]) { const wi = nm.map(function(m) { return Object.assign({}, m, { id: Date.now() + Math.random() }); }); sv(Object.assign({}, all, { [key]: Object.assign({}, dd, { meals: meals.concat(wi) }) })); };
   const delM = function(id: number) { sv(Object.assign({}, all, { [key]: Object.assign({}, dd, { meals: meals.filter(function(m: any) { return m.id !== id; }) }) })); };
