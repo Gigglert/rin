@@ -15,6 +15,7 @@ const PROJ_COLORS = ["#12A278", "#F5A623", "#F07860", "#6FAEDB", "#A98BD4", "#E4
 const COLS = [
   { id: "backlog", name: "Бэклог" },
   { id: "wip", name: "В работе" },
+  { id: "focus", name: "Прямщас" },
   { id: "review", name: "На проверке" },
   { id: "done", name: "Готово" },
 ];
@@ -23,6 +24,8 @@ const KINDS = [
   { id: "report", name: "отчётность", icon: "📊", color: "#6FAEDB" },
   { id: "task", name: "задача", icon: "✅", color: "#12A278" },
   { id: "research", name: "исследование", icon: "🔍", color: "#A98BD4" },
+  { id: "manage", name: "управление", icon: "👑", color: "#E8A93C" },
+  { id: "learn", name: "обучение", icon: "🎓", color: "#E4739E" },
 ];
 
 /* ── Вердикты ── */
@@ -149,6 +152,20 @@ function River({ value, max, mark, color, height = 22 }) {
   );
 }
 
+const parseYMD = (s) => { const p = (s || "").split("-").map(Number); return p.length === 3 && p[0] ? new Date(p[0], p[1] - 1, p[2]).getTime() : 0; };
+const fmtDate = (ts) => { const d = new Date(ts); return d.getDate() + "." + String(d.getMonth() + 1).padStart(2, "0"); };
+function dueInfo(due) {
+  const d = parseYMD(due);
+  if (!d) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const diff = Math.round((d - today.getTime()) / 86400000);
+  if (diff < 0) return { label: "🔥 " + fmtDate(d), color: C.ember };
+  if (diff === 0) return { label: "⏰ сегодня", color: C.coralDeep };
+  if (diff === 1) return { label: "завтра", color: C.goldDeep };
+  if (diff <= 3) return { label: fmtDate(d), color: C.gold };
+  return { label: fmtDate(d), color: C.mist };
+}
+
 /* ── Дельта план/факт ── */
 function deltaInfo(factMs, estMin) {
   if (!estMin) return null;
@@ -176,6 +193,7 @@ export default function Home() {
   const [manualMin, setManualMin] = useState("");
   const [manualH, setManualH] = useState("");
   const [manualDate, setManualDate] = useState("");
+  const [sprintFilter, setSprintFilter] = useState(null);
   const [estInput, setEstInput] = useState("");
   const [projMgr, setProjMgr] = useState(false);
   const [colorPick, setColorPick] = useState(null);
@@ -218,9 +236,24 @@ export default function Home() {
     if (filter === id) setFilter(null);
     setConfirmDel(null);
   };
+  const addSprint = () => {
+    const n = (data.sprints || []).length + 1;
+    const t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    const e0 = new Date(t0.getTime() + 13 * 86400000);
+    const ymd = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    commit({ ...data, sprints: [...(data.sprints || []), { id: "sp" + Date.now(), name: "Спринт " + n, start: ymd(t0), end: ymd(e0) }] });
+  };
+  const patchSprint = (id, patch) => {
+    commit({ ...data, sprints: (data.sprints || []).map(s => s.id === id ? { ...s, ...patch } : s) });
+  };
+  const deleteSprint = (id) => {
+    commit({ ...data, sprints: (data.sprints || []).filter(s => s.id !== id), tasks: data.tasks.map(t => t.sprintId === id ? { ...t, sprintId: null } : t) });
+    if (sprintFilter === id) setSprintFilter(null);
+    setConfirmDel(null);
+  };
   const addTask = (status) => {
     const ttl = newTitle.trim(); if (!ttl) return;
-    const t = { id: "t" + Date.now(), title: ttl, projectId: filter || null, status, kind: "task", estimateMin: 0, createdAt: Date.now(), sessions: [] };
+    const t = { id: "t" + Date.now(), title: ttl, projectId: filter || null, sprintId: sprintFilter || null, status, kind: "task", due: "", estimateMin: 0, createdAt: Date.now(), sessions: [] };
     commit({ ...data, tasks: [...data.tasks, t] });
     setNewTitle("");
   };
@@ -242,7 +275,7 @@ export default function Home() {
     if (!isRunning) {
       tasks = tasks.map(x => x.id === id ? {
         ...x,
-        status: x.status === "done" ? "wip" : x.status,
+        status: "focus",
         sessions: [...(x.sessions || []), { id: "s" + ts, startedAt: ts, endedAt: null }]
       } : x);
     }
@@ -272,8 +305,8 @@ export default function Home() {
   };
 
   /* ── агрегаты ── */
-  const visible = filter ? data.tasks.filter(t => t.projectId === filter) : data.tasks;
-  const wipCount = data.tasks.filter(t => t.status === "wip").length;
+  const visible = data.tasks.filter(t => (!filter || t.projectId === filter) && (!sprintFilter || t.sprintId === sprintFilter));
+  const wipCount = data.tasks.filter(t => t.status === "wip" || t.status === "focus").length;
   const wipVerd = verdict(WIP_V, wipCount);
   const nowD = new Date(now);
   const dayFrom = startOfDay(nowD).getTime();
@@ -297,13 +330,13 @@ export default function Home() {
     for (let i = 6; i >= 0; i--) {
       const d = new Date(dayFrom); d.setDate(d.getDate() - i);
       const f = d.getTime(), e = f + 86400000;
-      bars.push({ label: WD[(d.getDay() + 6) % 7], ms: msInRange(data.tasks, f, Math.min(e, now), now), cur: i === 0 });
+      bars.push({ label: WD[(d.getDay() + 6) % 7], ms: msInRange(data.tasks, f, Math.min(e, now), now), kinds: msInRangeByKind(data.tasks, f, Math.min(e, now), now), cur: i === 0 });
     }
   } else if (period === "week") {
     histMs = msInRange(data.tasks, weekFrom, now, now); histTable = WEEK_V; histMax = 65; histMark = 20;
     for (let i = 0; i < 7; i++) {
       const f = weekFrom + i * 86400000, e = f + 86400000;
-      bars.push({ label: WD[i], ms: f > now ? 0 : msInRange(data.tasks, f, Math.min(e, now), now), cur: now >= f && now < e });
+      bars.push({ label: WD[i], ms: f > now ? 0 : msInRange(data.tasks, f, Math.min(e, now), now), kinds: f > now ? {} : msInRangeByKind(data.tasks, f, Math.min(e, now), now), cur: now >= f && now < e });
     }
   } else {
     histMs = msInRange(data.tasks, monthFrom, now, now); histTable = MONTH_V; histMax = 280; histMark = 85;
@@ -311,13 +344,16 @@ export default function Home() {
     const monthEnd = startOfMonth(new Date(new Date(monthFrom).setMonth(new Date(monthFrom).getMonth() + 1))).getTime();
     while (f < monthEnd) {
       const e = f + 7 * 86400000;
-      bars.push({ label: "н" + wi, ms: f > now ? 0 : msInRange(data.tasks, Math.max(f, monthFrom), Math.min(e, now, monthEnd), now), cur: now >= f && now < e });
+      bars.push({ label: "н" + wi, ms: f > now ? 0 : msInRange(data.tasks, Math.max(f, monthFrom), Math.min(e, now, monthEnd), now), kinds: f > now ? {} : msInRangeByKind(data.tasks, Math.max(f, monthFrom), Math.min(e, now, monthEnd), now), cur: now >= f && now < e });
       f = e; wi++;
     }
   }
   const histH = histMs / 3600000;
   const histVerd = verdictHours(histTable, histH);
   const maxBar = Math.max(...bars.map(b => b.ms), 3600000);
+  const kindDay = msInRangeByKind(data.tasks, dayFrom, now, now);
+  const kindWeek = msInRangeByKind(data.tasks, weekFrom, now, now);
+  const kindMonth = msInRangeByKind(data.tasks, monthFrom, now, now);
 
   const modalTask = modal ? data.tasks.find(t => t.id === modal) : null;
   const projOf = (id) => data.projects.find(p => p.id === id);
@@ -414,6 +450,15 @@ export default function Home() {
             <button onClick={() => { setProjMgr(true); setColorPick(null); setConfirmDel(null); }} style={{ ...chip(false, C.ink), color: C.mist, padding: "5px 11px" }} title="настройки проектов">⚙</button>
           </div>
 
+          {/* спринты */}
+          {(data.sprints || []).filter(sp => parseYMD(sp.end) >= new Date(new Date().setHours(0, 0, 0, 0)).getTime()).length > 0 && (
+            <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+              {(data.sprints || []).filter(sp => parseYMD(sp.end) >= new Date(new Date().setHours(0, 0, 0, 0)).getTime()).map(sp => (
+                <button key={sp.id} onClick={() => setSprintFilter(sprintFilter === sp.id ? null : sp.id)} style={chip(sprintFilter === sp.id, C.ink)}>🏃 {sp.name}</button>
+              ))}
+            </div>
+          )}
+
           {/* колонки */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(235px, 1fr))", gap: 12 }}>
             {COLS.map(col => {
@@ -445,6 +490,8 @@ export default function Home() {
                               {p && <span style={{ fontSize: 11, fontWeight: 700, color: p.color }}>● {p.name}</span>}
                               <span style={{ fontSize: 10, opacity: .8 }} title={(KINDS.find(k => k.id === (t.kind || "task")) || KINDS[1]).name}>{(KINDS.find(k => k.id === (t.kind || "task")) || KINDS[1]).icon}</span>
                               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: C.mist }}>{ms ? fmtMs(ms) : "—"}</span>
+                              {running && (() => { const live = (t.sessions || []).find(s => s.endedAt == null); return live ? <span style={{ fontSize: 10.5, fontWeight: 800, color: C.goldDeep, fontFamily: "'JetBrains Mono', monospace" }}>⏱ {fmtMs(now - live.startedAt)}</span> : null; })()}
+                              {(() => { const du = dueInfo(t.due); return du ? <span style={{ fontSize: 10.5, fontWeight: 800, color: du.color }}>{du.label}</span> : null; })()}
                               {di && <span style={{ fontSize: 10.5, fontWeight: 800, color: "#fff", background: di.color, borderRadius: 999, padding: "1px 7px" }}>{di.sign}{di.pct}%</span>}
                             </div>
                           </div>
@@ -488,6 +535,35 @@ export default function Home() {
             </div>
             <div style={{ marginTop: 12 }}><River value={wipCount} max={8} mark={3} color={wipVerd.color} height={16} /></div>
           </div>
+
+          {(data.sprints || []).filter(sp => { const s = parseYMD(sp.start), e = parseYMD(sp.end); const t0 = new Date(new Date().setHours(0, 0, 0, 0)).getTime(); return s && e && s <= t0 && t0 <= e; }).map(sp => {
+            const spFrom = parseYMD(sp.start), spTo = parseYMD(sp.end) + 86400000;
+            const spTasks = data.tasks.filter(t => t.sprintId === sp.id);
+            const spMs = msInRange(spTasks, spFrom, Math.min(spTo, now), now);
+            const spEstAll = spTasks.reduce((s, t) => s + (t.estimateMin || 0), 0);
+            const doneN = spTasks.filter(t => t.status === "done").length;
+            const daysLeft = Math.max(Math.ceil((spTo - now) / 86400000), 0);
+            const timePct = Math.min(Math.round((now - spFrom) / (spTo - spFrom) * 100), 100);
+            const burnPct = spEstAll ? Math.round((spMs / MIN) / spEstAll * 100) : 0;
+            return (
+              <div key={sp.id} style={{ ...card, gridColumn: "1 / -1" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+                  <span style={{ fontFamily: "'Comfortaa', cursive", fontWeight: 700, fontSize: 15 }}>🏃 {sp.name}</span>
+                  <span style={{ fontSize: 12.5, color: C.mist, fontWeight: 700 }}>осталось {daysLeft} дн · готово {doneN}/{spTasks.length}</span>
+                </div>
+                <div style={{ marginTop: 10, fontSize: 11, color: C.mist, fontWeight: 700 }}>время спринта · {timePct}%</div>
+                <div style={{ height: 7, borderRadius: 4, background: C.well, marginTop: 4, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: timePct + "%", background: C.faint, transition: "width .4s" }} />
+                </div>
+                <div style={{ marginTop: 8, fontSize: 11, color: C.mist, fontWeight: 700 }}>сожжено · <span style={{ fontFamily: "'JetBrains Mono', monospace", color: C.ink }}>{fmtH(spMs)}ч</span>{spEstAll > 0 && <span> из {Math.round(spEstAll / 60 * 10) / 10}ч оценок · {burnPct}%</span>}</div>
+                {spEstAll > 0 && (
+                  <div style={{ height: 7, borderRadius: 4, background: C.well, marginTop: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: Math.min(burnPct, 100) + "%", background: burnPct > timePct + 10 ? C.coral : C.mint, transition: "width .4s" }} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           <div style={card}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: C.mist, fontWeight: 800, textTransform: "uppercase", marginBottom: 10 }}>По статусам</div>
@@ -562,6 +638,26 @@ export default function Home() {
             })()}
           </div>
 
+          <div style={{ ...card, marginBottom: 14 }}>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: C.mist, fontWeight: 800, textTransform: "uppercase", marginBottom: 10 }}>По типам</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.5fr .7fr .7fr .7fr", gap: 7, alignItems: "center" }}>
+              <span />
+              <span style={{ fontSize: 10.5, color: C.faint, textAlign: "right", fontWeight: 700 }}>сегодня</span>
+              <span style={{ fontSize: 10.5, color: C.faint, textAlign: "right", fontWeight: 700 }}>неделя</span>
+              <span style={{ fontSize: 10.5, color: C.faint, textAlign: "right", fontWeight: 700 }}>месяц</span>
+              {KINDS.map(k => (
+                <div key={k.id} style={{ display: "contents" }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: k.color, marginRight: 6 }} />{k.icon} {k.name}
+                  </span>
+                  {[kindDay, kindWeek, kindMonth].map((m, i) => (
+                    <span key={i} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, fontWeight: 700, textAlign: "right", color: m[k.id] > 0 ? C.ink : C.faint }}>{m[k.id] > 0 ? fmtH(m[k.id]) : "—"}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div style={card}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: C.mist, fontWeight: 800, textTransform: "uppercase", marginBottom: 14 }}>
               {period === "month" ? "по неделям" : "по дням"}
@@ -574,7 +670,11 @@ export default function Home() {
                 return (
                   <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, height: "100%", justifyContent: "flex-end" }}>
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10.5, color: C.mist }}>{b.ms ? fmtH(b.ms) : ""}</span>
-                    <div style={{ width: "100%", maxWidth: 44, height: h + "%", borderRadius: 8, background: b.ms ? `linear-gradient(180deg, ${v.color}, ${C.lagoon})` : C.well, outline: b.cur ? `2px solid ${C.ink}` : "none", outlineOffset: 2, transition: "height .4s" }} />
+                    <div style={{ width: "100%", maxWidth: 44, height: h + "%", borderRadius: 8, overflow: "hidden", display: "flex", flexDirection: "column-reverse", background: b.ms ? "transparent" : C.well, outline: b.cur ? `2px solid ${C.ink}` : "none", outlineOffset: 2, transition: "height .4s" }}>
+                      {b.ms > 0 && ["task", "report", "research", "manage", "learn"].map(kid => (b.kinds && b.kinds[kid] > 0) && (
+                        <div key={kid} style={{ height: (b.kinds[kid] / b.ms * 100) + "%", background: (KINDS.find(k => k.id === kid) || KINDS[1]).color, opacity: .88 }} />
+                      ))}
+                    </div>
                     <span style={{ fontSize: 11.5, fontWeight: b.cur ? 800 : 600, color: b.cur ? C.ink : C.mist }}>{b.label}</span>
                   </div>
                 );
@@ -637,6 +737,25 @@ export default function Home() {
               ))}
             </>)}
 
+            <div style={{ fontSize: 12, letterSpacing: 1.5, color: C.mist, fontWeight: 800, textTransform: "uppercase", margin: "18px 0 4px" }}>Спринты</div>
+            {(data.sprints || []).map(sp => (
+              <div key={sp.id} style={{ display: "flex", alignItems: "center", gap: 6, borderBottom: `1px solid ${C.line}`, padding: "9px 0", flexWrap: "wrap" }}>
+                <input key={sp.id + sp.name} defaultValue={sp.name}
+                  onKeyDown={e => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                  onBlur={e => { const v = e.target.value.trim(); if (v && v !== sp.name) patchSprint(sp.id, { name: v }); }}
+                  style={{ flex: "1 1 110px", minWidth: 90, border: "none", background: C.well, borderRadius: 10, padding: "7px 11px", fontSize: 13.5, fontWeight: 700, fontFamily: "'Nunito', sans-serif", color: C.ink }} />
+                <input type="date" value={sp.start || ""} onChange={e => patchSprint(sp.id, { start: e.target.value })} style={{ border: "none", background: C.well, borderRadius: 999, padding: "5px 9px", fontSize: 11.5, fontFamily: "'JetBrains Mono', monospace", color: C.ink }} />
+                <span style={{ color: C.faint, fontSize: 11 }}>→</span>
+                <input type="date" value={sp.end || ""} onChange={e => patchSprint(sp.id, { end: e.target.value })} style={{ border: "none", background: C.well, borderRadius: 999, padding: "5px 9px", fontSize: 11.5, fontFamily: "'JetBrains Mono', monospace", color: C.ink }} />
+                {confirmDel === sp.id ? (
+                  <button onClick={() => deleteSprint(sp.id)} style={{ ...btn, background: C.coral, color: "#fff", borderRadius: 999, padding: "6px 12px", fontSize: 12 }}>точно?</button>
+                ) : (
+                  <button onClick={() => setConfirmDel(sp.id)} style={{ ...btn, background: "none", color: C.faint, fontSize: 16 }}>×</button>
+                )}
+              </div>
+            ))}
+            <button onClick={addSprint} style={{ ...btn, marginTop: 8, background: C.well, color: C.ink, borderRadius: 999, padding: "7px 14px", fontSize: 12.5 }}>+ спринт (2 недели)</button>
+
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
               <button onClick={() => setProjMgr(false)} style={{ ...btn, background: C.ink, color: "#fff", borderRadius: 999, padding: "8px 22px", fontSize: 14 }}>готово</button>
             </div>
@@ -663,11 +782,19 @@ export default function Home() {
                 <button key={c.id} onClick={() => patchTask(modalTask.id, { status: c.id })} style={chip(modalTask.status === c.id, C.mint)}>{c.name}</button>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
               {KINDS.map(k => (
                 <button key={k.id} onClick={() => patchTask(modalTask.id, { kind: k.id })} style={chip((modalTask.kind || "task") === k.id, k.color)}>{k.icon} {k.name}</button>
               ))}
             </div>
+            {(data.sprints || []).length > 0 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                <button onClick={() => patchTask(modalTask.id, { sprintId: null })} style={chip(!modalTask.sprintId, C.ink)}>без спринта</button>
+                {(data.sprints || []).filter(sp => parseYMD(sp.end) >= new Date(new Date().setHours(0, 0, 0, 0)).getTime() || sp.id === modalTask.sprintId).map(sp => (
+                  <button key={sp.id} onClick={() => patchTask(modalTask.id, { sprintId: sp.id })} style={chip(modalTask.sprintId === sp.id, C.ink)}>🏃 {sp.name}</button>
+                ))}
+              </div>
+            )}
 
             {/* таймер + факт/план */}
             <div style={{ background: C.well, borderRadius: 16, padding: 14, marginBottom: 14 }}>
@@ -703,6 +830,15 @@ export default function Home() {
                   placeholder="часов" inputMode="decimal"
                   style={{ width: 74, border: "none", borderRadius: 999, padding: "6px 12px", fontSize: 13, background: C.well, fontFamily: "'JetBrains Mono', monospace" }} />
                 {modalTask.estimateMin > 0 && <button onClick={() => { patchTask(modalTask.id, { estimateMin: 0 }); setEstInput(""); }} style={{ ...btn, background: "none", color: C.faint, fontSize: 12 }}>сброс</button>}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12, letterSpacing: 1.5, color: C.mist, fontWeight: 800, textTransform: "uppercase", marginBottom: 8 }}>Дедлайн</div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <input type="date" value={modalTask.due || ""} onChange={e => patchTask(modalTask.id, { due: e.target.value })} style={{ border: "none", background: C.well, borderRadius: 999, padding: "6px 12px", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", color: C.ink }} />
+                {(() => { const du = dueInfo(modalTask.due); return du ? <span style={{ fontSize: 12.5, fontWeight: 800, color: du.color }}>{du.label}</span> : null; })()}
+                {modalTask.due && <button onClick={() => patchTask(modalTask.id, { due: "" })} style={{ ...btn, background: "none", color: C.faint, fontSize: 12 }}>сброс</button>}
               </div>
             </div>
 
