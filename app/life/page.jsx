@@ -21,10 +21,84 @@ const MN = ["января", "февраля", "марта", "апреля", "м�
 const longDate = (s) => { const d = parseISO(s); return WD[d.getDay()] + ", " + d.getDate() + " " + MN[d.getMonth()]; };
 const shortDate = (s) => { const d = parseISO(s); return d.getDate() + "." + pad(d.getMonth() + 1); };
 const uid = () => Math.random().toString(36).slice(2, 10);
-/* Пока данные живут в браузере (localStorage). Позже сюда подключается Supabase. */
+/* ═════════ хранение: браузер + Supabase ═════════
+   Всё сначала пишется в браузер (мгновенно и без сети), затем фоном уходит в таблицу life_kv.
+   При запуске подтягиваются свежие записи из облака: у каждого ключа побеждает более поздняя правка. */
 const K = (k) => "gl:" + k;
-const sget = async (key, fb) => { try { const r = localStorage.getItem(K(key)); return r != null ? JSON.parse(r) : fb; } catch (e) { return fb; } };
-const sset = async (key, v) => { try { localStorage.setItem(K(key), JSON.stringify(v)); } catch (e) { console.error(e); } };
+/* адрес и публичный ключ берутся из настроек Vercel (Environment Variables) */
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const SB_H = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" };
+const TABLE = SB_URL + "/rest/v1/life_kv";
+const META = "gl:__meta"; /* { ключ: { t: время правки, dirty: ещё не в облаке } } */
+
+const lread = (k, fb) => { try { const r = localStorage.getItem(k); return r != null ? JSON.parse(r) : fb; } catch (e) { return fb; } };
+const lwrite = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { console.error(e); } };
+
+let cloudListener = () => {};
+const cloudState = (s) => cloudListener(s);
+const dirtyKeys = () => { const m = lread(META, {}); return Object.keys(m).filter((k) => m[k].dirty); };
+
+async function pushDirty() {
+  if (!SB_URL || !SB_KEY) { cloudState("off"); return false; }
+  const m = lread(META, {});
+  const keys = Object.keys(m).filter((k) => m[k].dirty);
+  if (!keys.length) { cloudState("ok"); return true; }
+  const rows = keys.map((k) => ({ key: k, value: lread(k, null), updated_at: new Date(m[k].t).toISOString() }));
+  const body = JSON.stringify(rows);
+  try {
+    const r = await fetch(TABLE + "?on_conflict=key", {
+      method: "POST", headers: { ...SB_H, Prefer: "resolution=merge-duplicates,return=minimal" }, body,
+      keepalive: body.length < 60000 /* чтобы запись долетела даже при закрытии вкладки */
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const m2 = lread(META, {});
+    keys.forEach((k) => { if (m2[k] && m2[k].t === m[k].t) m2[k].dirty = false; });
+    lwrite(META, m2);
+    cloudState(dirtyKeys().length ? "wait" : "ok");
+    return true;
+  } catch (e) { console.error("cloud save:", e); cloudState("off"); return false; }
+}
+let pushT = null;
+const schedulePush = () => { clearTimeout(pushT); pushT = setTimeout(pushDirty, 1500); };
+
+async function pullAll() {
+  const m = lread(META, {});
+  /* данные, записанные до подключения облака, помечаем «к отправке» с древней датой — облако их не перетрёт, если там пусто */
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("gl:") && k !== META && !m[k]) m[k] = { t: 1, dirty: true };
+    }
+  } catch (e) { console.error(e); }
+  if (!SB_URL || !SB_KEY) { lwrite(META, m); cloudState("off"); return 0; }
+  const ctrl = new AbortController(); const stop = setTimeout(() => ctrl.abort(), 7000);
+  let got = 0;
+  try {
+    for (let from = 0; ; from += 1000) {
+      const r = await fetch(TABLE + "?select=key,value,updated_at&order=key&limit=1000&offset=" + from,
+        { headers: SB_H, cache: "no-store", signal: ctrl.signal });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const rows = await r.json();
+      rows.forEach((row) => {
+        const t = Date.parse(row.updated_at) || 0; const cur = m[row.key];
+        if (!cur || t > cur.t) { lwrite(row.key, row.value); m[row.key] = { t, dirty: false }; got++; }
+        else if (cur.t === t) cur.dirty = false;
+      });
+      if (rows.length < 1000) break;
+    }
+    lwrite(META, m); clearTimeout(stop);
+    await pushDirty();
+    return got;
+  } catch (e) { console.error("cloud load:", e); lwrite(META, m); clearTimeout(stop); cloudState("off"); return 0; }
+}
+
+const sget = async (key, fb) => lread(K(key), fb);
+const sset = async (key, v) => {
+  lwrite(K(key), v);
+  const m = lread(META, {}); m[K(key)] = { t: Date.now(), dirty: true }; lwrite(META, m);
+  cloudState("wait"); schedulePush();
+};
 
 /* ═════════ справочники ═════════ */
 const MICROS = [
@@ -1080,7 +1154,10 @@ function StatsTab({ summary, cfg, date, meas, saveMeas, hours }) {
 }
 
 /* ═════════ ЕЩЁ ═════════ */
-function MoreTab({ cfg, saveCfg, day, saveDay, summary, meas }) {
+const CLOUD_L = { ok: "облако: всё сохранено", wait: "облако: сохраняю…", off: "облако: нет связи, данные пока в телефоне" };
+const CLOUD_C = { ok: "#4ADE80", wait: "#FFC24D", off: "#FF6B6B" };
+
+function MoreTab({ cfg, saveCfg, day, saveDay, summary, meas, cloud, resync }) {
   const [p, setP] = useState({ name: "", dose: "" });
   const [pm, setPm] = useState({}); const [openMicro, setOpenMicro] = useState(false);
   const [rw, setRw] = useState({ title: "", type: "streak", value: "" });
@@ -1186,6 +1263,14 @@ function MoreTab({ cfg, saveCfg, day, saveDay, summary, meas }) {
         ))}
       </Panel>
 
+      <Panel cap="Облако" right={<span className="sub" style={{ color: CLOUD_C[cloud] }}>● {CLOUD_L[cloud].replace("облако: ", "")}</span>}>
+        <div className="sub">
+          Записи хранятся в браузере и копируются в Supabase, поэтому телефон и ноутбук видят одно и то же.
+          Без интернета всё пишется локально и отправится, как только связь вернётся.
+        </div>
+        <button className="btn ghost" style={{ marginTop: 9, width: "100%" }} onClick={resync}>Синхронизировать сейчас</button>
+      </Panel>
+
       <Panel cap="Данные">
         <div className="row">
           <button className="btn ghost" style={{ flex: 1 }} onClick={backup}>Резервная копия</button>
@@ -1210,6 +1295,8 @@ export default function ZhitZhizn() {
   const [summary, setSummary] = useState({});
   const [meas, setMeas] = useState([]);
   const [ready, setReady] = useState(false);
+  const [cloud, setCloud] = useState("wait");
+  const [rev, setRev] = useState(0); /* растёт, когда из облака пришли свежие данные — день перечитывается */
   const [msg, setMsg] = useState("");
   const toastT = useRef(null); const lvRef = useRef(null);
   const pending = useRef({}); const summaryRef = useRef({});
@@ -1219,14 +1306,18 @@ export default function ZhitZhizn() {
     toastT.current = setTimeout(() => setMsg(""), 2600);
   };
 
+  const loadAll = async () => {
+    const [c, s, m] = await Promise.all([sget("cfg", null), sget("summary", {}), sget("meas", [])]);
+    const base = defCfg();
+    setCfg(c ? { ...base, ...c, goals: { ...base.goals, ...(c.goals || {}) } } : base);
+    summaryRef.current = s || {};
+    setSummary(s || {}); setMeas(m || []); setRev((x) => x + 1); setReady(true);
+  };
+
   useEffect(() => {
-    (async () => {
-      const [c, s, m] = await Promise.all([sget("cfg", null), sget("summary", {}), sget("meas", [])]);
-      const base = defCfg();
-      setCfg(c ? { ...base, ...c, goals: { ...base.goals, ...(c.goals || {}) } } : base);
-      summaryRef.current = s || {};
-      setSummary(s || {}); setMeas(m || []); setReady(true);
-    })();
+    cloudListener = setCloud;
+    (async () => { await pullAll(); await loadAll(); })();
+    return () => { cloudListener = () => {}; };
   }, []);
 
   useEffect(() => {
@@ -1237,7 +1328,7 @@ export default function ZhitZhizn() {
       if (alive) setDayRec({ d: date, v: { ...emptyDay(), ...(d || {}) } });
     })();
     return () => { alive = false; };
-  }, [date]);
+  }, [date, rev]);
 
   /* у каждого дня свой отложенный таймер записи — правка одного дня не отменяет запись другого */
   const flush = (d) => {
@@ -1258,11 +1349,20 @@ export default function ZhitZhizn() {
 
   /* при закрытии или сворачивании вкладки дописываем всё, что не успело сохраниться */
   useEffect(() => {
-    const flushAll = () => Object.keys(pending.current).forEach(flush);
-    const onHide = () => { if (document.visibilityState === "hidden") flushAll(); };
+    const flushAll = () => { Object.keys(pending.current).forEach(flush); clearTimeout(pushT); pushDirty(); };
+    /* вернулась в приложение (например, после правок с ноутбука) — подтягиваем свежее из облака */
+    const onShow = async () => {
+      if (Object.keys(pending.current).length) return;
+      if (await pullAll()) loadAll();
+    };
+    const onHide = () => { if (document.visibilityState === "hidden") flushAll(); else onShow(); };
     window.addEventListener("pagehide", flushAll);
+    window.addEventListener("online", pushDirty);
     document.addEventListener("visibilitychange", onHide);
-    return () => { window.removeEventListener("pagehide", flushAll); document.removeEventListener("visibilitychange", onHide); };
+    return () => {
+      window.removeEventListener("pagehide", flushAll); window.removeEventListener("online", pushDirty);
+      document.removeEventListener("visibilitychange", onHide);
+    };
   }, []);
 
   /* агрегаты системы */
@@ -1309,7 +1409,9 @@ export default function ZhitZhizn() {
       <div className="bar-top">
         <button className="iconbtn" onClick={() => setDate(shiftD(date, -1))}><ChevronLeft size={21} /></button>
         <div style={{ textAlign: "center" }}>
-          <div className="cap" style={{ fontSize: 10 }}>Жить жизнь</div>
+          <div className="cap" style={{ fontSize: 10 }}>
+            Жить жизнь <span title={CLOUD_L[cloud]} style={{ color: CLOUD_C[cloud] }}>●</span>
+          </div>
           <div style={{ fontWeight: 700, fontSize: 15 }}>{longDate(date)}</div>
         </div>
         <button className="iconbtn" onClick={() => setDate(shiftD(date, 1))} disabled={date >= todayISO()}
@@ -1323,7 +1425,8 @@ export default function ZhitZhizn() {
         {day && tab === "skills" && <SkillsTab day={day} cfg={cfg} summary={liveSummary} date={date} saveDay={saveDay} saveCfg={saveCfg} toast={toast} hours={stats.hours} />}
         {day && tab === "quests" && <QuestsTab cfg={cfg} saveCfg={saveCfg} date={date} toast={toast} summary={liveSummary} />}
         {day && tab === "stats" && <StatsTab summary={liveSummary} cfg={cfg} date={date} meas={meas} saveMeas={saveMeas} hours={stats.hours} />}
-        {day && tab === "more" && <MoreTab cfg={cfg} saveCfg={saveCfg} day={day} saveDay={saveDay} summary={summary} meas={meas} />}
+        {day && tab === "more" && <MoreTab cfg={cfg} saveCfg={saveCfg} day={day} saveDay={saveDay} summary={summary} meas={meas} cloud={cloud}
+          resync={async () => { await pullAll(); await loadAll(); toast("Синхронизация выполнена"); }} />}
       </div>
 
       {msg && <div className="toast mono">[ СИСТЕМА ] {msg}</div>}
