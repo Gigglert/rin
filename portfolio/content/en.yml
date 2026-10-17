@@ -1,0 +1,284 @@
+# ─────────────────────────────────────────────────────────────
+#  АНГЛИЙСКАЯ ВЕРСИЯ САЙТА (адрес: /)
+#  Русская версия лежит рядом: content/ru.yml (адрес: /ru)
+#  Как редактировать — см. РЕДАКТИРОВАНИЕ.md в корне репозитория.
+#
+#  Главные правила YAML:
+#   • отступы только пробелами, по 2 на уровень;
+#   • новый пункт списка начинается с «- »;
+#   • если в тексте есть двоеточие с пробелом «: » или текст
+#     начинается с кавычки/скобки, оберните его в "двойные кавычки".
+# ─────────────────────────────────────────────────────────────
+
+site:
+  name: "[your name]"                 # логотип слева в шапке
+  title: "Head of Marketing Portfolio" # название вкладки браузера
+  description: "Head of Marketing with 10+ years in B2B tech across US, UK, EU and MENA markets."
+  footer_left: "© 2026 [Your Name] · Head of Marketing"
+  footer_right: "Remote · US, UK, EU, MENA"
+
+# Порядок секций на странице. Чтобы скрыть секцию — удалите строку,
+# чтобы переставить — поменяйте строки местами.
+# Доступные: hero, stats, experience, cases, skills, education, looking, contact
+order:
+  - hero
+  - stats
+  - experience
+  - cases
+  - skills
+  - education
+  - looking
+  - contact
+
+# Меню в шапке. href — это «#» + название секции.
+nav:
+  - { label: Experience, href: "#experience" }
+  - { label: Case studies, href: "#cases" }
+  - { label: Skills, href: "#skills" }
+  - { label: Education, href: "#education" }
+
+header_button: { label: Get in touch, href: "#contact" }
+
+# ── Первый экран ──
+hero:
+  title: I build B2B marketing from zero
+  lead: >-
+    Head of Marketing with 10+ years in B2B tech across US, UK, EU and MENA markets.
+    Positioning, go-to-market, lead generation and analytics, delivered with an
+    AI-native workflow, lean teams and tight budgets.
+  buttons:                             # первая кнопка синяя, остальные — текстом
+    - { label: See case studies, href: "#cases" }
+    - { label: Download résumé (PDF), href: "/resume/Resume_Head_of_Marketing_EN.pdf" }
+  card:
+    photo: ""                          # например "/images/photo.jpg"; пусто — показываются инициалы
+    initials: YN
+    name: "[Your Name]"
+    subtitle: "Head of Marketing · B2B Tech, HealthTech & FinTech"
+    facts:
+      - { label: Focus, value: AI-driven growth and go-to-market }
+      - { label: Experience, value: 10+ years in B2B tech }
+      - { label: Markets, value: "US, UK, EU, MENA" }
+      - { label: Format, value: Remote }
+      - { label: Languages, value: English C1 · Russian native }
+    tags: [B2B SaaS, GTM, ABM, Paid, AEO / GEO, HubSpot]
+  badge: { title: "Now: Head of Marketing", text: "OS MENA, Dubai" }   # плашка под карточкой; удалите строку, если не нужна
+
+# ── Цифры и компании ──
+stats:
+  items:
+    - { value: "130%", label: "of the net new lead plan, Veeam EMEA" }
+    - { value: "−63%", label: cost per lead after the EMEA rebuild }
+    - { value: "2×", label: MQL-to-SQL conversion with ABM at Ecommpay }
+    - { value: "+45%", label: qualified inbound leads every six months at Diffco }
+  companies:                           # можно добавить logo: "/images/logos/veeam.svg"
+    - { name: Veeam }
+    - { name: Ecommpay }
+    - { name: IT Medical }
+    - { name: Diffco }
+    - { name: OS MENA }
+
+# ── Опыт работы ── (сверху — самое свежее место)
+experience:
+  eyebrow: Experience
+  title: From SEO specialist to Head of Marketing
+  jobs:
+    - role: Head of Marketing
+      company: OS MENA
+      dates: Feb 2026 — now
+      place: Dubai, UAE
+      about: Odoo ERP implementation partner
+      points:
+        - Own brand, marketing and communications strategy for the MENA market
+        - "Run pre-sales enablement: presentations, proposals and materials for business development"
+        - Turn campaign and customer data into recommendations for leadership
+
+    - role: Head of Marketing
+      company: IT Medical
+      dates: Apr 2024 — Feb 2026
+      place: USA
+      about: AI-powered healthcare software
+      points:
+        - Designed and ran the go-to-market for the SaaS launch in the US and UK
+        - Launched a new website in 3 months, scoring 98% on SEO and 95% on AEO/GEO
+        - Cut CPL by 30% within 6 months of launch; reached 18% SQL-to-deal conversion
+        - Secured placements in Forbes Technology Council, Business Insider and MedCity News
+
+    - role: Fractional Head of Marketing
+      company: Black Aerospace
+      dates: Nov 2023 — Sep 2024
+      place: Dubai, UAE · part-time
+      about: Early-stage space launch startup
+      points:
+        - "Found first clients and investors on a zero budget: 2 MoUs with international space agencies"
+        - Helped secure pre-seed and seed investors and got the company into Station F
+        - "Launched training programs as a new revenue stream: 3 preliminary contracts"
+
+    - role: Head of Growth Marketing
+      company: Ecommpay
+      dates: Jan 2023 — Dec 2023
+      place: Riga, Latvia
+      about: Payment services
+      points:
+        - "Launched account-based marketing from scratch: +60% engagement from target accounts"
+        - Doubled MQL-to-SQL conversion from 10% to 20% in 6 months
+        - Aligned marketing, product and sales around key account segments
+
+    - role: Head of Marketing
+      company: Diffco
+      dates: Sep 2021 — Jan 2023
+      place: USA
+      about: Software development and staff augmentation
+      points:
+        - Built the North American marketing system from scratch
+        - Grew qualified inbound leads by 45% every six months and cut CPA by 30%
+        - Owned the budget; built ROI dashboards adopted across departments
+
+    - role: Head of Marketing
+      company: Dochery Branding
+      dates: Jun 2020 — Sep 2021
+      place: Saint Petersburg
+      about: Branding agency for FMCG and alcohol brands
+      points:
+        - Led the agency's repositioning after TAM–SAM–SOM sizing pointed to alcohol branding
+        - Ran CustDev and JTBD research; built the bilingual website and PR strategy
+        - Opened expansion into Georgia through Georgia Wine Expo
+
+    - role: Senior Digital Marketing Manager
+      company: Veeam Software
+      dates: Jan 2017 — May 2020
+      about: Enterprise software, EMEA region
+      points:
+        - Took the region from 20–50% of quarterly quota to 103%, and 130% of the net new lead plan
+        - Managed ~$1M in ad budgets across 1,000+ campaigns; ran 100+ A/B tests
+        - Led a team of 3
+
+    - role: Digital Marketing Manager
+      company: ProfitKit
+      dates: Jan 2015 — Jan 2017
+      place: Saint Petersburg
+      about: Web development and digital agency
+      points:
+        - Ran SEO for up to 7 client sites at once; brought target queries into Yandex TOP-3 and TOP-10
+
+# ── Кейсы ──
+cases:
+  eyebrow: Case studies
+  title: Problem, approach and result in numbers
+  intro: >-
+    Four projects from different stages: rebuilding a mature region, launching ABM,
+    taking a SaaS to market and finding first investors for a startup.
+  all_label: All
+  filters:                             # id связывает вкладку с category у кейса
+    - { id: perf, label: Performance }
+    - { id: abm, label: ABM }
+    - { id: gtm, label: Go-to-market }
+    - { id: startup, label: Startup }
+  items:
+    - category: perf
+      color: yellow                    # yellow | blue | green | pink
+      image: ""                        # обложка кейса, например "/images/cases/veeam.png"
+      client: Veeam Software · EMEA
+      big: "−63%"
+      big_label: cost per lead, Q2 to Q3 2018
+      title: Rebuilding digital marketing for a region that missed quota
+      steps:
+        - { label: Problem, text: "EMEA hit only 20–50% of quarterly quota in 2015–2017." }
+        - { label: Approach, text: "Moved from first-click to multi-touch attribution, cut Baidu, Yahoo Japan and Xing, switched to tCPA bidding and ran 100+ landing page tests." }
+        - { label: Result, text: "103% of quota and 130% of the net new lead plan, with every country inside cost-per-result benchmarks." }
+      metrics:
+        - { value: "+193%", label: conversion rate }
+        - { value: "+28%", label: conversions }
+        - { value: "−52%", label: total spend }
+      tags: [Google Ads, Attribution, A/B tests, ~$1M budget]
+      # link: { label: Read the full case, href: "https://..." }
+
+    - category: abm
+      color: blue
+      client: Ecommpay · Payments
+      big: "2×"
+      big_label: MQL-to-SQL conversion in 6 months
+      title: Launching account-based marketing from scratch
+      steps:
+        - { label: Problem, text: "The funnel leaked and lead quality was too low for sales." }
+        - { label: Approach, text: "Defined the ICP and focus accounts, ran programmatic one-to-many outreach and nurturing, and repositioned products from customer feedback." }
+        - { label: Result, text: "MQL-to-SQL conversion grew from 10% to 20%; marketing, product and sales shared one account framework." }
+      metrics:
+        - { value: "10 → 20%", label: MQL-to-SQL }
+        - { value: "+60%", label: target account engagement }
+        - { value: 6 mo., label: to results }
+      tags: [ABM, ICP, Email, PPC]
+
+    - category: gtm
+      color: green
+      client: IT Medical · HealthTech SaaS
+      big: 121 MQLs
+      big_label: in 30 days from third-party channels
+      title: Taking an AI healthcare SaaS to the US and UK
+      steps:
+        - { label: Problem, text: "New offer with no validated positioning, website or lead flow." }
+        - { label: Approach, text: "Validated product-market fit, built ICP and CJM, launched the site in 3 months and lead gen across Google, LinkedIn, Bing, Reddit, Quora, PR and AI search." }
+        - { label: Result, text: "CPL down 30% within 6 months; Paid Search became the top SQL source." }
+      metrics:
+        - { value: "18%", label: SQL-to-deal }
+        - { value: "24", label: SQLs per quarter from paid }
+        - { value: "95%", label: AEO/GEO site score }
+      tags: [GTM, HubSpot, AEO / GEO, PR]
+
+    - category: startup
+      color: pink
+      client: Black Aerospace · Space startup
+      big: "$0"
+      big_label: budget to pre-seed and seed rounds
+      title: Finding first clients and investors for a space launch startup
+      steps:
+        - { label: Problem, text: "Pre-product company with no marketing budget and no pipeline." }
+        - { label: Approach, text: "Built positioning and USP, ran cold outreach and space conferences, produced pitch decks and the data room, applied to accelerators." }
+        - { label: Result, text: "Pre-seed and seed investors secured; accepted into Station F." }
+      metrics:
+        - { value: "2", label: MoUs with space agencies }
+        - { value: "3", label: preliminary contracts }
+        - { value: Station F, label: accelerator }
+      tags: [Positioning, Outreach, Investor materials]
+
+# ── Навыки ── icon: target | growth | bars | spark
+skills:
+  eyebrow: Skills
+  title: What I do and the tools I use
+  groups:
+    - { icon: target, title: Strategy, items: [Positioning and messaging, Go-to-market strategy, "ICP, CJM, JTBD"] }
+    - { icon: growth, title: Demand generation, items: [ABM, Paid acquisition, "SEO, AEO, GEO"] }
+    - { icon: bars, title: Analytics and ops, items: [Marketing analytics and budgeting, Sales handoff and SLAs, Team and agency management] }
+    - { icon: spark, title: AI stack, items: ["ChatGPT, Claude, Gemini, Perplexity", Midjourney, AI-built dashboards and tools] }
+  tools: [HubSpot, Google Ads, LinkedIn Ads, Meta Ads, Bing Ads, Reddit Ads, Quora Ads, Google Analytics, Yandex Metrica, Sales Navigator, Figma, Canva, Notion]
+
+# ── Образование ──
+education:
+  eyebrow: Education
+  title: Education, certifications and languages
+  items:
+    - { when: 2009 — 2014, title: Samara State University, text: "Specialist's degree in Philology" }
+    - { when: 2013 · 2014, title: Additional qualifications, text: "Translator in Professional Communication (English), Journalism" }
+    - { when: Certifications, title: "Google Ads, Google Analytics", text: "Google Ads (2019), Google Analytics Advanced" }
+    - { when: Languages, title: English C1, text: EF SET 70/100 · Russian native }
+
+# ── Что ищу ── (тёмный блок; featured: true — белая карточка)
+looking:
+  eyebrow: What I'm looking for
+  title: The role where I add the most
+  intro: Companies that need marketing built or rebuilt, where marketing owns pipeline and works closely with sales.
+  cards:
+    - { title: Role, items: [Head of Marketing, "Hands-on, with a lean team", Owning strategy and budget] }
+    - { title: Industries, badge: Strongest fit, featured: true, items: [B2B SaaS and tech, HealthTech, FinTech and payments] }
+    - { title: Format, items: [Remote, International teams, "US, UK, EU and MENA markets"] }
+
+# ── Контакты ── href — ссылка; copy: true — кнопка «Copy»
+contact:
+  eyebrow: Contact
+  title: Let's talk
+  text: Tell me about the role and the team. I usually reply within a day.
+  copy_label: Copy
+  copied_label: Copied
+  rows:
+    - { label: Email, value: "[email]", href: "mailto:[email]", copy: true }
+    - { label: Phone, value: "[phone]", copy: true }
+    - { label: Profile, value: LinkedIn, href: "https://www.linkedin.com/" }
