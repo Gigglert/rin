@@ -1,0 +1,275 @@
+# ─────────────────────────────────────────────────────────────
+#  РУССКАЯ ВЕРСИЯ САЙТА (адрес: /ru)
+#  Английская версия лежит рядом: content/en.yml (адрес: /)
+#  Структура файлов одинаковая: что добавили здесь — добавьте и там.
+#  Как редактировать — см. РЕДАКТИРОВАНИЕ.md в корне репозитория.
+# ─────────────────────────────────────────────────────────────
+
+site:
+  name: "[ваше имя]"
+  title: "Портфолио Head of Marketing"
+  description: "Head of Marketing с опытом 10+ лет в B2B-технологиях на рынках США, Великобритании, ЕС и MENA."
+  footer_left: "© 2026 [Ваше имя] · Head of Marketing"
+  footer_right: "Удалённо · США, Великобритания, ЕС, MENA"
+
+# Порядок секций: hero, stats, experience, cases, skills, education, looking, contact
+order:
+  - hero
+  - stats
+  - experience
+  - cases
+  - skills
+  - education
+  - looking
+  - contact
+
+nav:
+  - { label: Опыт, href: "#experience" }
+  - { label: Кейсы, href: "#cases" }
+  - { label: Навыки, href: "#skills" }
+  - { label: Образование, href: "#education" }
+
+header_button: { label: Связаться, href: "#contact" }
+
+# ── Первый экран ──
+hero:
+  title: Строю B2B-маркетинг с нуля
+  lead: >-
+    Head of Marketing с опытом 10+ лет в B2B-технологиях на рынках США, Великобритании,
+    ЕС и MENA. Позиционирование, выход на рынок, лидогенерация и аналитика. Работаю
+    с AI-инструментами на каждом этапе, поэтому справляюсь небольшой командой и скромным бюджетом.
+  buttons:
+    - { label: Смотреть кейсы, href: "#cases" }
+    - { label: Скачать резюме (PDF), href: "/resume/Resume_Head_of_Marketing_RU.pdf" }
+  card:
+    photo: ""                          # например "/images/photo.jpg"
+    initials: ВИ
+    name: "[Ваше имя]"
+    subtitle: "Head of Marketing · B2B Tech, HealthTech и FinTech"
+    facts:
+      - { label: Фокус, value: Рост на основе AI и выход на рынок }
+      - { label: Опыт, value: 10+ лет в B2B-технологиях }
+      - { label: Рынки, value: "США, Великобритания, ЕС, MENA" }
+      - { label: Формат, value: Удалённо }
+      - { label: Языки, value: Английский C1 · русский родной }
+    tags: [B2B SaaS, GTM, ABM, Платный трафик, AEO / GEO, HubSpot]
+  badge: { title: "Сейчас: Head of Marketing", text: "OS MENA, Дубай" }
+
+# ── Цифры и компании ──
+stats:
+  items:
+    - { value: "130%", label: "плана по новым лидам, Veeam EMEA" }
+    - { value: "−63%", label: стоимость лида после перестройки маркетинга в EMEA }
+    - { value: "2×", label: рост конверсии MQL в SQL благодаря ABM в Ecommpay }
+    - { value: "+45%", label: квалифицированных входящих лидов каждые полгода в Diffco }
+  companies:
+    - { name: Veeam }
+    - { name: Ecommpay }
+    - { name: IT Medical }
+    - { name: Diffco }
+    - { name: OS MENA }
+
+# ── Опыт работы ──
+experience:
+  eyebrow: Опыт работы
+  title: От SEO-специалиста до Head of Marketing
+  jobs:
+    - role: Head of Marketing
+      company: OS MENA
+      dates: фев 2026 — сейчас
+      place: Дубай, ОАЭ
+      about: Партнёр по внедрению Odoo ERP
+      points:
+        - Отвечаю за бренд, маркетинговую и коммуникационную стратегию на рынке MENA
+        - "Веду пресейл: презентации, коммерческие предложения и материалы для отдела продаж"
+        - Анализирую данные кампаний и клиентов и готовлю рекомендации для руководства
+
+    - role: Head of Marketing
+      company: IT Medical
+      dates: апр 2024 — фев 2026
+      place: США
+      about: ПО для здравоохранения на основе AI
+      points:
+        - Разработала и реализовала стратегию выхода SaaS-продукта на рынки США и Великобритании
+        - Запустила новый сайт за 3 месяца с оценкой 98% по SEO и 95% по AEO/GEO
+        - Снизила CPL на 30% за 6 месяцев после запуска, конверсия SQL в сделку достигла 18%
+        - Организовала публикации в Forbes Technology Council, Business Insider и MedCity News
+
+    - role: Fractional Head of Marketing
+      company: Black Aerospace
+      dates: ноя 2023 — сен 2024
+      place: Дубай, ОАЭ · частичная занятость
+      about: Космический стартап на ранней стадии
+      points:
+        - "Нашла первых клиентов и инвесторов без бюджета: 2 меморандума с международными космическими агентствами"
+        - Помогла привлечь инвесторов в pre-seed и seed раундах, вывела компанию в акселератор Station F
+        - "Запустила обучающие программы как новый источник выручки: 3 предварительных контракта"
+
+    - role: Head of Growth Marketing
+      company: Ecommpay
+      dates: янв 2023 — дек 2023
+      place: Рига, Латвия
+      about: Платёжные сервисы
+      points:
+        - "Запустила account-based marketing с нуля: вовлечённость целевых аккаунтов выросла на 60%"
+        - Удвоила конверсию MQL в SQL с 10% до 20% за 6 месяцев
+        - Объединила маркетинг, продукт и продажи вокруг ключевых сегментов клиентов
+
+    - role: Head of Marketing
+      company: Diffco
+      dates: сен 2021 — янв 2023
+      place: США
+      about: Заказная разработка ПО и аутстаффинг
+      points:
+        - Построила маркетинг для рынка Северной Америки с нуля
+        - Каждые полгода увеличивала число квалифицированных входящих лидов на 45%, снизила CPA на 30%
+        - Управляла бюджетом, внедрила дашборды по ROI, которыми пользовались все отделы
+
+    - role: Head of Marketing
+      company: Dochery Branding
+      dates: июн 2020 — сен 2021
+      place: Санкт-Петербург
+      about: Брендинговое агентство для FMCG и алкогольных брендов
+      points:
+        - Провела репозиционирование агентства после оценки рынка по TAM–SAM–SOM, которая выделила алкогольный брендинг
+        - Провела CustDev и JTBD-исследования, запустила двуязычный сайт и PR-стратегию
+        - Вывела агентство в Грузию через выставку Georgia Wine Expo
+
+    - role: Senior Digital Marketing Manager
+      company: Veeam Software
+      dates: янв 2017 — май 2020
+      about: Корпоративное ПО, регион EMEA
+      points:
+        - Вывела регион с 20–50% квартального плана продаж на 103%, план по новым лидам выполнен на 130%
+        - Управляла рекламным бюджетом около $1 млн в 1 000+ кампаниях, провела 100+ A/B-тестов
+        - Руководила командой из 3 человек
+
+    - role: Digital Marketing Manager
+      company: ProfitKit
+      dates: янв 2015 — янв 2017
+      place: Санкт-Петербург
+      about: Веб-разработка и digital-агентство
+      points:
+        - Вела SEO до 7 клиентских сайтов одновременно, выводила целевые запросы в ТОП-3 и ТОП-10 Яндекса
+
+# ── Кейсы ──
+cases:
+  eyebrow: Кейсы
+  title: Задача, решение и результат в цифрах
+  intro: >-
+    Четыре проекта на разных стадиях: перестройка маркетинга в зрелом регионе, запуск ABM,
+    вывод SaaS на новые рынки и поиск первых инвесторов для стартапа.
+  all_label: Все
+  filters:
+    - { id: perf, label: Performance }
+    - { id: abm, label: ABM }
+    - { id: gtm, label: Выход на рынок }
+    - { id: startup, label: Стартап }
+  items:
+    - category: perf
+      color: yellow
+      image: ""
+      client: Veeam Software · EMEA
+      big: "−63%"
+      big_label: стоимость лида, Q2 → Q3 2018
+      title: Перестройка digital-маркетинга в регионе, который не выполнял план
+      steps:
+        - { label: Задача, text: "В 2015–2017 годах EMEA выполнял лишь 20–50% квартального плана продаж." }
+        - { label: Решение, text: "Перешла с атрибуции по первому клику на мультиканальную, отключила Baidu, Yahoo Japan и Xing, перевела ставки на tCPA и провела 100+ тестов посадочных страниц." }
+        - { label: Результат, text: "103% плана продаж и 130% плана по новым лидам, все страны уложились в целевую стоимость результата." }
+      metrics:
+        - { value: "+193%", label: конверсия }
+        - { value: "+28%", label: конверсии }
+        - { value: "−52%", label: общие расходы }
+      tags: [Google Ads, Атрибуция, A/B-тесты, бюджет ~$1 млн]
+
+    - category: abm
+      color: blue
+      client: Ecommpay · Платежи
+      big: "2×"
+      big_label: рост конверсии MQL в SQL за 6 месяцев
+      title: Запуск account-based marketing с нуля
+      steps:
+        - { label: Задача, text: "Воронка теряла лидов, а их качество не устраивало продажи." }
+        - { label: Решение, text: "Описала ICP и приоритетные аккаунты, запустила программатик-охват и прогрев, переупаковала продукты по обратной связи от клиентов." }
+        - { label: Результат, text: "Конверсия MQL в SQL выросла с 10% до 20%, маркетинг, продукт и продажи работают по общей схеме для ключевых клиентов." }
+      metrics:
+        - { value: "10 → 20%", label: MQL в SQL }
+        - { value: "+60%", label: вовлечённость целевых аккаунтов }
+        - { value: 6 мес., label: до результата }
+      tags: [ABM, ICP, Email, PPC]
+
+    - category: gtm
+      color: green
+      client: IT Medical · HealthTech SaaS
+      big: 121 MQL
+      big_label: за 30 дней из сторонних каналов
+      title: Вывод AI-продукта для медицины на рынки США и Великобритании
+      steps:
+        - { label: Задача, text: "Новый продукт без проверенного позиционирования, сайта и потока лидов." }
+        - { label: Решение, text: "Проверила product-market fit, описала ICP и CJM, запустила сайт за 3 месяца и лидогенерацию через Google, LinkedIn, Bing, Reddit, Quora, PR и AI-поиск." }
+        - { label: Результат, text: "CPL снизился на 30% за 6 месяцев, платный поиск стал главным источником SQL." }
+      metrics:
+        - { value: "18%", label: SQL в сделку }
+        - { value: "24", label: SQL в квартал из платного поиска }
+        - { value: "95%", label: оценка сайта по AEO/GEO }
+      tags: [GTM, HubSpot, AEO / GEO, PR]
+
+    - category: startup
+      color: pink
+      client: Black Aerospace · Космический стартап
+      big: "$0"
+      big_label: бюджета до раундов pre-seed и seed
+      title: Поиск первых клиентов и инвесторов для космического стартапа
+      steps:
+        - { label: Задача, text: "Компания без готового продукта, маркетингового бюджета и воронки." }
+        - { label: Решение, text: "Построила позиционирование и УТП, вела холодные рассылки и работу на отраслевых конференциях, подготовила питч-деки и data room, подала заявки в акселераторы." }
+        - { label: Результат, text: "Привлечены инвесторы pre-seed и seed, компания попала в Station F." }
+      metrics:
+        - { value: "2", label: меморандума с космическими агентствами }
+        - { value: "3", label: предварительных контракта }
+        - { value: Station F, label: акселератор }
+      tags: [Позиционирование, Аутрич, Материалы для инвесторов]
+
+# ── Навыки ──
+skills:
+  eyebrow: Навыки
+  title: Что умею и какими инструментами пользуюсь
+  groups:
+    - { icon: target, title: Стратегия, items: [Позиционирование и месседжинг, Стратегия выхода на рынок, "ICP, CJM, JTBD"] }
+    - { icon: growth, title: Генерация спроса, items: [ABM, Платное привлечение, "SEO, AEO, GEO"] }
+    - { icon: bars, title: Аналитика и процессы, items: [Маркетинговая аналитика и бюджет, Передача лидов в продажи и SLA, Управление командой и подрядчиками] }
+    - { icon: spark, title: AI-инструменты, items: ["ChatGPT, Claude, Gemini, Perplexity", Midjourney, Дашборды и внутренние инструменты с помощью AI] }
+  tools: [HubSpot, Google Ads, LinkedIn Ads, Meta Ads, Bing Ads, Reddit Ads, Quora Ads, Google Analytics, Яндекс Метрика, Sales Navigator, Figma, Canva, Notion]
+
+# ── Образование ──
+education:
+  eyebrow: Образование
+  title: Образование, сертификаты и языки
+  items:
+    - { when: 2009 — 2014, title: Самарский государственный университет, text: "Специалитет, филология (русский язык и литература)" }
+    - { when: 2013 · 2014, title: Дополнительная квалификация, text: "Переводчик в сфере профессиональной коммуникации (английский), журналистика" }
+    - { when: Сертификаты, title: "Google Ads, Google Analytics", text: "Google Ads (2019), Google Analytics Advanced" }
+    - { when: Языки, title: Английский C1, text: EF SET 70/100 · русский родной }
+
+# ── Что ищу ──
+looking:
+  eyebrow: Что ищу
+  title: Где я принесу больше всего пользы
+  intro: Компании, где маркетинг нужно построить или перестроить, он отвечает за воронку и тесно работает с продажами.
+  cards:
+    - { title: Роль, items: [Head of Marketing, Руками и с небольшой командой, Отвечаю за стратегию и бюджет] }
+    - { title: Сферы, badge: Лучше всего подхожу, featured: true, items: [B2B SaaS и технологии, HealthTech, FinTech и платежи] }
+    - { title: Формат, items: [Удалённо, Международные команды, "Рынки США, Великобритании, ЕС и MENA"] }
+
+# ── Контакты ──
+contact:
+  eyebrow: Контакты
+  title: Давайте познакомимся
+  text: Расскажите о вакансии и команде. Обычно отвечаю в течение дня.
+  copy_label: Копировать
+  copied_label: Скопировано
+  rows:
+    - { label: Почта, value: "[email]", href: "mailto:[email]", copy: true }
+    - { label: Телефон, value: "[телефон]", copy: true }
+    - { label: Профиль, value: LinkedIn, href: "https://www.linkedin.com/" }
